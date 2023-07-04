@@ -4,7 +4,7 @@ services:
 
   #  start Postgres, and ensure that data is stored to a mounted volume
   postgres:
-    image: 'postgres:14.2'
+    image: 'postgres:14.8'
     ports:
       - "5432:5432"
     restart: always
@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: concurrency
     volumes:
-      - ./db-data/postgres/:/var/lib/postgresql/data/
+      - ./db-data/postgres/:/var/lib/postgresql:Z
 
   #  start Redis, and ensure that data is stored to a mounted volume
   redis:
