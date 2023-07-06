@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: concurrency
     volumes:
-      - ./db-data/postgres/:/var/lib/postgresql:Z
+      - ./db-data/postgres/:/var/lib/postgresql/db
 
   #  start Redis, and ensure that data is stored to a mounted volume
   redis:
