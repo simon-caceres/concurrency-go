@@ -2,6 +2,8 @@ package main
 
 import (
 	"database/sql"
+	"encoding/gob"
+	"final-project/data"
 	"fmt"
 	"log"
 	"net/http"
@@ -43,6 +45,7 @@ func main() {
 		Wait:     &wg,
 		InfoLog:  infolog,
 		ErrorLog: errorlog,
+		Models:   data.New(db),
 	}
 	// set up mailer
 
@@ -125,6 +128,8 @@ func openDB(dsn string) (*sql.DB, error) {
 }
 
 func initiateSession() *scs.SessionManager {
+	gob.Register(data.User{})
+
 	// set up session
 	session := scs.New()
 	session.Store = redisstore.New(initRedis())
