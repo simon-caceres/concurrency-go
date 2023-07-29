@@ -149,7 +149,6 @@ func initRedis() *redis.Pool {
 			return redis.Dial("tcp", os.Getenv("REDIS_DSN"))
 		},
 	}
-
 	return redisPool
 }
 
