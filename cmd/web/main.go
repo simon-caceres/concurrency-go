@@ -48,6 +48,9 @@ func main() {
 		Models:   data.New(db),
 	}
 	// set up mailer
+	app.Mailer = app.createMail()
+
+	go app.listenFormMail()
 
 	// listen for signals
 	go app.listenForShutDown()
@@ -165,11 +168,38 @@ func (app *Config) listenForShutDown() {
 
 func (app *Config) shutDown() {
 	// perform any cleanup tasks
-
 	app.InfoLog.Println("Gracefully shutting down the server")
 
 	// block until waitgroup is empy
 	app.Wait.Wait()
 
+	app.Mailer.DoneChan <- true
+
 	app.InfoLog.Println("Server shut down")
+	// close channels
+	close(app.Mailer.ErrorChan)
+	close(app.Mailer.MailerChan)
+	close(app.Mailer.DoneChan)
+}
+
+func (app *Config) createMail() Mail {
+	// create channels
+	errorChan := make(chan error)
+	mailerChan := make(chan Message, 100)
+	mailerDoneChan := make(chan bool)
+
+	m := Mail{
+		Domain:      "localhost",
+		Host:        "localhost",
+		Port:        1025,
+		Encryption:  "none",
+		FromName:    "Admin",
+		FromAddress: "admin@localhost",
+		Wait:        app.Wait,
+		ErrorChan:   errorChan,
+		MailerChan:  mailerChan,
+		DoneChan:    mailerDoneChan,
+	}
+
+	return m
 }

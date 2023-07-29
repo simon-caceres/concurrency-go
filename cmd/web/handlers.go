@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -45,9 +44,19 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 
 	// if the password is not correct
 	if err != nil || !match {
-		fmt.Println("password is not correct")
 		app.Session.Put(r.Context(), "error", "Invalid login credentials")
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
+
+		if !match {
+			msg := Message{
+				To:      email,
+				Subject: "Login attempt failed",
+				Data:    "Invalid login credentials",
+			}
+
+			app.SendEmail(msg)
+		}
+
 		return
 	}
 	// if the password is correct
@@ -87,4 +96,24 @@ func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 	// send an email with attachments
 
 	// send an email with the invoice attached
+}
+
+func (app *Config) TestEmail(w http.ResponseWriter, r *http.Request) {
+	m := Mail{
+		Domain:      "localhost",
+		Host:        "localhost",
+		Port:        1025,
+		Encryption:  "none",
+		FromName:    "Test",
+		FromAddress: "info@localhost",
+		ErrorChan:   make(chan error),
+	}
+
+	msg := Message{
+		To:      "me@localhost",
+		Subject: "Test email",
+		Data:    "This is a test email",
+	}
+
+	m.sendMail(msg, make(chan error))
 }
