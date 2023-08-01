@@ -186,3 +186,44 @@ func (app *Config) TestEmail(w http.ResponseWriter, r *http.Request) {
 
 	m.sendMail(msg, make(chan error))
 }
+
+func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
+	if !app.Session.Exists(r.Context(), "userID") {
+		app.Session.Put(r.Context(), "warning", "Please login to continue")
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+
+	plans, err := app.Models.Plan.GetAll()
+	if err != nil {
+		app.ErrorLog.Println(err)
+	}
+	// TODO: add a error page
+
+	dataMap := make(map[string]any)
+	dataMap["plans"] = plans
+
+	app.render(w, r, "plans.page.gohtml", &TemplateData{
+		Data: dataMap,
+	})
+}
+
+func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
+	// GET THE id of the plan that is chosen
+
+	// get the plan from the database
+
+	// get the user from the session
+
+	// generate an invoice
+
+	// send the email with the invoice attached
+
+	// generate a manual
+
+	// send the email with the manual attached
+
+	// create a subscription
+
+	// redirect
+}
