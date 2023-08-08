@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 )
 
 func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
@@ -188,12 +189,6 @@ func (app *Config) TestEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
-	if !app.Session.Exists(r.Context(), "userID") {
-		app.Session.Put(r.Context(), "warning", "Please login to continue")
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
-	}
-
 	plans, err := app.Models.Plan.GetAll()
 	if err != nil {
 		app.ErrorLog.Println(err)
@@ -210,10 +205,25 @@ func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
 
 func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 	// GET THE id of the plan that is chosen
+	id := r.URL.Query().Get("id")
+
+	planID, _ := strconv.Atoi(id)
 
 	// get the plan from the database
+	plan, err := app.Models.Plan.GetOne(planID)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Unable to find a plan.")
+		http.Redirect(w, r, "/menbers/plans", http.StatusSeeOther)
+		return
+	}
 
 	// get the user from the session
+	user, ok := app.Session.Get(r.Context(), "user").(data.User)
+	if !ok {
+		app.Session.Put(r.Context(), "error", "Unable to find a user.")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
 
 	// generate an invoice
 
