@@ -226,6 +226,27 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// generate an invoice
+	app.Wait.Add(1)
+
+	go func() {
+		defer app.Wait.Done()
+
+		// create an invoice
+		invoice, err := app.GetInvoice(plan, user)
+		if err != nil {
+			app.ErrorChan <- err
+		}
+
+		msg := Message{
+			To:       user.Email,
+			Subject:  "Invoice",
+			Template: "invoice-email",
+			Data:     invoice,
+		}
+
+		// send email
+		app.SendEmail(msg)
+	}()
 
 	// send the email with the invoice attached
 
@@ -236,4 +257,8 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 	// create a subscription
 
 	// redirect
+}
+
+func (app *Config) GetInvoice(plan *data.Plan, u data.User) (string, error) {
+	return plan.PlanAmountFormatted, nil
 }

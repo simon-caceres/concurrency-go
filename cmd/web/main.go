@@ -40,12 +40,14 @@ func main() {
 	wg := sync.WaitGroup{}
 	// set up the aplication config
 	app := Config{
-		Session:  session,
-		DB:       db,
-		Wait:     &wg,
-		InfoLog:  infolog,
-		ErrorLog: errorlog,
-		Models:   data.New(db),
+		Session:       session,
+		DB:            db,
+		Wait:          &wg,
+		InfoLog:       infolog,
+		ErrorLog:      errorlog,
+		Models:        data.New(db),
+		ErrorChan:     make(chan error),
+		ErrorChanDone: make(chan bool),
 	}
 	// set up mailer
 	app.Mailer = app.createMail()
@@ -55,10 +57,26 @@ func main() {
 	// listen for signals
 	go app.listenForShutDown()
 
+	// listen for errors
+	go app.listenForErrors()
+
 	// listen for web connections
 
 	app.serve()
 
+}
+
+func (app *Config) listenForErrors() {
+	for {
+		select {
+		case err := <-app.ErrorChan:
+			if err != nil {
+				app.ErrorLog.Println(err)
+			}
+		case <-app.ErrorChanDone:
+			return
+		}
+	}
 }
 
 func (app *Config) serve() {
@@ -174,12 +192,15 @@ func (app *Config) shutDown() {
 	app.Wait.Wait()
 
 	app.Mailer.DoneChan <- true
+	app.ErrorChanDone <- true
 
 	app.InfoLog.Println("Server shut down")
 	// close channels
 	close(app.Mailer.ErrorChan)
 	close(app.Mailer.MailerChan)
 	close(app.Mailer.DoneChan)
+	close(app.ErrorChan)
+	close(app.ErrorChanDone)
 }
 
 func (app *Config) createMail() Mail {
