@@ -13,6 +13,9 @@ import (
 	"github.com/phpdave11/gofpdf/contrib/gofpdi"
 )
 
+var pathToManual = "./pdf"
+var tmpPath = "./tmp"
+
 func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "home.page.gohtml", nil)
 }
@@ -265,7 +268,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 
 		pdf := app.generateManual(plan, user)
 
-		err := pdf.OutputFileAndClose(fmt.Sprintf("./tmp/%d_manual.pdf", user.ID))
+		err := pdf.OutputFileAndClose(fmt.Sprintf("%s/%d_manual.pdf", tmpPath, user.ID))
 		if err != nil {
 			app.ErrorChan <- err
 			return
@@ -277,7 +280,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 			Template: "invoice-email",
 			Data:     "Your user manual is attached",
 			AttachmentMap: map[string]string{
-				"Manual.pdf": fmt.Sprintf("./tmp/%d_manual.pdf", user.ID),
+				"Manual.pdf": fmt.Sprintf("%s/%d_manual.pdf", tmpPath, user.ID),
 			},
 		}
 
@@ -320,7 +323,7 @@ func (app *Config) generateManual(plan *data.Plan, u data.User) *gofpdf.Fpdf {
 
 	time.Sleep(5 * time.Second)
 
-	t := importer.ImportPage(pdf, "./pdf/manual.pdf", 1, "/MediaBox")
+	t := importer.ImportPage(pdf, fmt.Sprintf("%s/manual.pdf", pathToManual), 1, "/MediaBox")
 
 	pdf.AddPage()
 

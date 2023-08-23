@@ -124,3 +124,29 @@ func TestConfig_PostLoginPage(t *testing.T) {
 		t.Error("session does not exist")
 	}
 }
+
+func TestConfig_SubscribeToPlan(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/subscribe?id=1", nil)
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+
+	testApp.Session.Put(ctx, "user", data.User{
+		ID:        1,
+		Email:     "admin@example.com",
+		FirstName: "Admin",
+		LastName:  "User",
+		Active:    1,
+	})
+
+	handler := http.HandlerFunc(testApp.SubscribeToPlan)
+	handler.ServeHTTP(rr, req)
+
+	// wait to thing to finish
+	testApp.Wait.Wait()
+
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("want %d; got %d", http.StatusSeeOther, rr.Code)
+	}
+
+}
